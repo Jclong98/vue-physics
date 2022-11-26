@@ -31,7 +31,7 @@ const player = new Ball({
 
 const balls: Ball[] = [player];
 
-for (let i = 0; i < 100; i++) {
+for (let i = 0; i < 50; i++) {
   const size = randomInt(10, 50);
 
   balls.push(
@@ -49,7 +49,7 @@ for (let i = 0; i < 100; i++) {
 }
 
 // walls that line the canvas
-const walls: Wall[] = [
+const walls = computed<Wall[]>(() => [
   new Wall(new Vector(0, 0), new Vector(width.value, 0), "white"),
   new Wall(
     new Vector(width.value, 0),
@@ -62,11 +62,22 @@ const walls: Wall[] = [
     "white"
   ),
   new Wall(new Vector(0, height.value), new Vector(0, 0), "white"),
-];
+]);
 
 // main loop
 useRafFn(() => {
   ctx.value?.clearRect(0, 0, width.value, height.value);
+
+  for (const wall of walls.value) {
+    wall.draw(ctx.value!);
+
+    for (const ball of balls) {
+      if (isColliding(ball, wall)) {
+        resolvePenetration(ball, wall);
+        resolveCollision(ball, wall);
+      }
+    }
+  }
 
   for (const ball of balls) {
     if (ball.isPlayer) useInputs(ball, mouseControls);
@@ -87,17 +98,6 @@ useRafFn(() => {
     }
 
     ball.reposition();
-  }
-
-  for (const wall of walls) {
-    wall.draw(ctx.value!);
-
-    for (const ball of balls) {
-      if (isColliding(ball, wall)) {
-        resolvePenetration(ball, wall);
-        resolveCollision(ball, wall);
-      }
-    }
   }
 });
 </script>

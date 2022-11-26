@@ -123,7 +123,7 @@ export class Ball {
     this.position = this.position.add(this.velocity);
 
     // gravity
-    // this.velocity = this.velocity.add(new Vector(0, 0.01));
-    // this.position = this.position.add(this.velocity);
+    this.velocity = this.velocity.add(new Vector(0, 0.01));
+    this.position = this.position.add(this.velocity);
   }
 }
