@@ -1,4 +1,6 @@
-import { Vector } from "./Vector";
+import { useBallInputs } from "@/composables/useInputs";
+import { Vector } from "@/utils";
+import type { MaybeComputedRef } from "@vueuse/core";
 
 interface BallProps {
   position: Vector;
@@ -125,5 +127,9 @@ export class Ball {
     // gravity
     this.velocity = this.velocity.add(new Vector(0, 0.01));
     this.position = this.position.add(this.velocity);
+  }
+
+  applyInput(mouseControls: MaybeComputedRef<boolean>) {
+    useBallInputs(this, mouseControls);
   }
 }

@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import {
-  randomInt,
+  Ball,
   isColliding,
+  randomInt,
   resolvePenetration,
   resolveCollision,
-  findClosestPoint,
+  Vector,
+  Wall,
 } from "@/utils";
-import { Ball, Wall, Vector } from "@/utils/physics-objects";
-import { useInputs } from "@/composables/useInputs";
+import { drawInputs } from "@/composables/useInputs";
 
 const showDebug = ref(false);
 const mouseControls = ref(false);
@@ -17,9 +18,8 @@ const ctx = computed(() => canvas.value?.getContext("2d"));
 
 const { width, height } = useWindowSize();
 const { x, y } = useMouse();
-const fps = useFps();
-
 const { current } = useMagicKeys();
+const fps = useFps();
 
 const player = new Ball({
   position: new Vector(299, 100),
@@ -48,25 +48,42 @@ for (let i = 0; i < 50; i++) {
   );
 }
 
+const wall = new Wall({
+  startPosition: new Vector(600, 600),
+  endPosition: new Vector(700, 800),
+  color: "white",
+});
+
 // walls that line the canvas
 const walls = computed<Wall[]>(() => [
-  new Wall(new Vector(0, 0), new Vector(width.value, 0), "white"),
-  new Wall(
-    new Vector(width.value, 0),
-    new Vector(width.value, height.value),
-    "white"
-  ),
-  new Wall(
-    new Vector(width.value, height.value),
-    new Vector(0, height.value),
-    "white"
-  ),
-  new Wall(new Vector(0, height.value), new Vector(0, 0), "white"),
+  new Wall({
+    startPosition: new Vector(0, 0),
+    endPosition: new Vector(width.value, 0),
+    color: "white",
+  }),
+  new Wall({
+    startPosition: new Vector(width.value, 0),
+    endPosition: new Vector(width.value, height.value),
+    color: "white",
+  }),
+  new Wall({
+    startPosition: new Vector(width.value, height.value),
+    endPosition: new Vector(0, height.value),
+    color: "white",
+  }),
+  new Wall({
+    startPosition: new Vector(0, height.value),
+    endPosition: new Vector(0, 0),
+    color: "white",
+  }),
+  wall,
 ]);
 
 // main loop
 useRafFn(() => {
-  ctx.value?.clearRect(0, 0, width.value, height.value);
+  if (!ctx.value) return;
+
+  ctx.value.clearRect(0, 0, width.value, height.value);
 
   for (const wall of walls.value) {
     wall.draw(ctx.value!);
@@ -77,10 +94,14 @@ useRafFn(() => {
         resolveCollision(ball, wall);
       }
     }
+
+    wall.reposition();
   }
 
+  wall.applyInput();
+
   for (const ball of balls) {
-    if (ball.isPlayer) useInputs(ball, mouseControls);
+    if (ball.isPlayer) ball.applyInput(mouseControls);
 
     ball.draw(ctx.value!);
 
@@ -99,6 +120,8 @@ useRafFn(() => {
 
     ball.reposition();
   }
+
+  drawInputs(ctx.value, new Vector(100, 100));
 });
 </script>
 

@@ -1,5 +1,9 @@
 import { Ball, Wall } from "./physics-objects";
 
+export * from "./physics-objects";
+export * from "./Vector";
+export * from "./Matrix";
+
 export function randomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
