@@ -78,4 +78,8 @@ export class Vector {
     ctx.strokeStyle = color;
     ctx.stroke();
   }
+
+  cross(vector: Vector) {
+    return this.x * vector.y - this.y * vector.x;
+  }
 }

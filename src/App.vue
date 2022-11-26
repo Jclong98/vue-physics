@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   Ball,
+  Capsule,
   isColliding,
   randomInt,
   resolvePenetration,
@@ -10,7 +11,6 @@ import {
 } from "@/utils";
 import { drawInputs } from "@/composables/useInputs";
 
-const showDebug = ref(false);
 const mouseControls = ref(false);
 
 const canvas = ref<HTMLCanvasElement>();
@@ -79,15 +79,23 @@ const walls = computed<Wall[]>(() => [
   wall,
 ]);
 
+const capsule = new Capsule({
+  startPosition: new Vector(100, 100),
+  endPosition: new Vector(200, 200),
+  r: 30,
+});
+
+const capsules = computed<Capsule[]>(() => [capsule]);
+
 // main loop
 useRafFn(() => {
   if (!ctx.value) return;
 
+  // clear canvas
   ctx.value.clearRect(0, 0, width.value, height.value);
 
+  // update walls
   for (const wall of walls.value) {
-    wall.draw(ctx.value!);
-
     for (const ball of balls) {
       if (isColliding(ball, wall)) {
         resolvePenetration(ball, wall);
@@ -96,19 +104,13 @@ useRafFn(() => {
     }
 
     wall.reposition();
+    wall.draw(ctx.value);
   }
 
   wall.applyInput();
 
+  // update balls
   for (const ball of balls) {
-    if (ball.isPlayer) ball.applyInput(mouseControls);
-
-    ball.draw(ctx.value!);
-
-    if (showDebug.value) {
-      ball.drawDebug(ctx.value!);
-    }
-
     for (const otherBall of balls) {
       if (ball == otherBall) continue;
 
@@ -119,7 +121,16 @@ useRafFn(() => {
     }
 
     ball.reposition();
+    ball.draw(ctx.value!);
   }
+
+  // update capsules
+  for (const capsule of capsules.value) {
+    capsule.reposition();
+    capsule.draw(ctx.value);
+  }
+
+  capsule.applyInput();
 
   drawInputs(ctx.value, new Vector(100, 100));
 });
@@ -129,16 +140,6 @@ useRafFn(() => {
   <div
     class="of-auto max-h-screen absolute right-2 top-2 p-4 rounded-xl bg-stone-700 text-stone-50 shadow"
   >
-    <label>
-      <input type="checkbox" v-model="showDebug" />
-      Show debug
-    </label>
-
-    <label>
-      <input type="checkbox" v-model="mouseControls" />
-      Mouse controls
-    </label>
-
     <p>{{ fps }} fps</p>
     <p>{{ { x, y } }}</p>
     <p>currentKeys: {{ [...current.values()] }}</p>

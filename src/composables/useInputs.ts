@@ -1,7 +1,7 @@
 import { Vector } from "@/utils";
 import { mapGamepadToXbox360Controller } from "@vueuse/core";
 
-import type { Ball, Wall } from "@/utils/physics-objects";
+import type { Ball, Capsule, Wall } from "@/utils/physics-objects";
 import type { MaybeComputedRef } from "@vueuse/core";
 
 const { x, y } = useMouse();
@@ -52,6 +52,17 @@ export function useBallInputs(
 export function useWallInputs(wall: Wall) {
   if (arrowLeft.value) wall.rotationSpeed -= 0.001;
   if (arrowRight.value) wall.rotationSpeed += 0.001;
+}
+
+export function useCapsuleInputs(capsule: Capsule) {
+  if (w.value)
+    capsule.acceleration = capsule.direction.multiply(-capsule.speed);
+  if (s.value) capsule.acceleration = capsule.direction.multiply(capsule.speed);
+  if (a.value) capsule.rotationSpeed = -0.02;
+  if (d.value) capsule.rotationSpeed = 0.02;
+
+  if (!w.value && !s.value)
+    capsule.acceleration = capsule.direction.multiply(0);
 }
 
 export function drawInputs(ctx: CanvasRenderingContext2D, position: Vector) {

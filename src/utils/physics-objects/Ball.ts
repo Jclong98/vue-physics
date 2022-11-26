@@ -125,8 +125,7 @@ export class Ball {
     this.position = this.position.add(this.velocity);
 
     // gravity
-    this.velocity = this.velocity.add(new Vector(0, 0.01));
-    this.position = this.position.add(this.velocity);
+    this.acceleration = this.acceleration.add(new Vector(0, 0.1));
   }
 
   applyInput(mouseControls: MaybeComputedRef<boolean>) {
