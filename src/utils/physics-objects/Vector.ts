@@ -39,6 +39,11 @@ export class Vector {
     return Math.sqrt(this.x ** 2 + this.y ** 2);
   }
 
+  get unit(): Vector {
+    if (this.magnitude === 0) return this;
+    return this.divide(this.magnitude);
+  }
+
   setMagnitude(magnitude: number) {
     const currentMagnitude = this.magnitude;
 
@@ -62,5 +67,15 @@ export class Vector {
 
   dot(vector: Vector) {
     return this.x * vector.x + this.y * vector.y;
+  }
+
+  draw(ctx: CanvasRenderingContext2D, to: Vector, color = "white") {
+    if (ctx === undefined) return;
+
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y);
+    ctx.lineTo(to.x, to.y);
+    ctx.strokeStyle = color;
+    ctx.stroke();
   }
 }

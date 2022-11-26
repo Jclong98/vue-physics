@@ -1,4 +1,4 @@
-import { Vector } from "@/utils/Vector";
+import { Vector } from "./Vector";
 
 interface BallProps {
   position: Vector;
@@ -58,7 +58,9 @@ export class Ball {
     ctx.beginPath();
     ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
     if (ctx) ctx.fillStyle = this.color;
-    ctx.fill();
+    if (ctx) ctx.strokeStyle = this.color;
+    // ctx.fill();
+    ctx.stroke();
     ctx.closePath();
   }
 
@@ -119,41 +121,9 @@ export class Ball {
     this.velocity = this.velocity.add(this.acceleration);
     this.velocity = this.velocity.multiply(1 - this.friction);
     this.position = this.position.add(this.velocity);
+
+    // gravity
+    // this.velocity = this.velocity.add(new Vector(0, 0.01));
+    // this.position = this.position.add(this.velocity);
   }
-}
-
-export function isColliding(b1: Ball, b2: Ball) {
-  return b1.position.distance(b2.position) < b1.radius + b2.radius;
-}
-
-export function resolvePenetration(b1: Ball, b2: Ball) {
-  const distanceVector = b1.position.subtract(b2.position);
-  const penetrationDepth = b1.radius + b2.radius - distanceVector.magnitude;
-  const penetrationResolution = distanceVector
-    .setMagnitude(1)
-    .multiply(penetrationDepth / (b1.inverseMass + b2.inverseMass));
-
-  b1.position = b1.position.add(penetrationResolution.multiply(b1.inverseMass));
-  b2.position = b2.position.subtract(
-    penetrationResolution.multiply(b2.inverseMass)
-  );
-}
-
-export function resolveCollision(b1: Ball, b2: Ball) {
-  const normal = b1.position.subtract(b2.position).setMagnitude(1);
-  const relativeVelocity = b1.velocity.subtract(b2.velocity);
-  const separationVelocity = relativeVelocity.dot(normal);
-  const newSeparationVelocity =
-    -separationVelocity * Math.min(b1.elasticity, b2.elasticity);
-
-  const deltaVelocity = newSeparationVelocity - separationVelocity;
-  const totalInverseMass = b1.inverseMass + b2.inverseMass;
-
-  if (totalInverseMass <= 0) return;
-
-  const impulse = deltaVelocity / totalInverseMass;
-  const impulseVector = normal.multiply(impulse);
-
-  b1.velocity = b1.velocity.add(impulseVector.multiply(b1.inverseMass));
-  b2.velocity = b2.velocity.add(impulseVector.multiply(-b2.inverseMass));
 }

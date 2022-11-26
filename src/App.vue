@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { randomInt } from "./utils";
 import {
-  Ball,
+  randomInt,
   isColliding,
   resolvePenetration,
   resolveCollision,
-} from "@/utils/Ball";
-import { Vector } from "@/utils/Vector";
+  findClosestPoint,
+} from "@/utils";
+import { Ball, Wall, Vector } from "@/utils/physics-objects";
+import { useInputs } from "@/composables/useInputs";
 
 const showDebug = ref(false);
-const mouseControls = ref(true);
+const mouseControls = ref(false);
 
 const canvas = ref<HTMLCanvasElement>();
 const ctx = computed(() => canvas.value?.getContext("2d"));
@@ -18,16 +19,17 @@ const { width, height } = useWindowSize();
 const { x, y } = useMouse();
 const fps = useFps();
 
-const { w, a, s, d, current } = useMagicKeys();
+const { current } = useMagicKeys();
 
 const player = new Ball({
-  position: new Vector(100, 100),
+  position: new Vector(299, 100),
   r: 30,
   color: "lime",
   isPlayer: true,
+  elasticity: 0.5,
 });
 
-const balls: Ball[] = [];
+const balls: Ball[] = [player];
 
 for (let i = 0; i < 100; i++) {
   const size = randomInt(10, 50);
@@ -46,35 +48,29 @@ for (let i = 0; i < 100; i++) {
   );
 }
 
-balls.push(player);
+// walls that line the canvas
+const walls: Wall[] = [
+  new Wall(new Vector(0, 0), new Vector(width.value, 0), "white"),
+  new Wall(
+    new Vector(width.value, 0),
+    new Vector(width.value, height.value),
+    "white"
+  ),
+  new Wall(
+    new Vector(width.value, height.value),
+    new Vector(0, height.value),
+    "white"
+  ),
+  new Wall(new Vector(0, height.value), new Vector(0, 0), "white"),
+];
 
-function applyInputs(ball: Ball) {
-  if (w.value) ball.acceleration.y = -ball.speed;
-  if (a.value) ball.acceleration.x = -ball.speed;
-  if (s.value) ball.acceleration.y = ball.speed;
-  if (d.value) ball.acceleration.x = ball.speed;
-
-  if (!w.value && !s.value) ball.acceleration.y = 0;
-  if (!a.value && !d.value) ball.acceleration.x = 0;
-
-  ball.velocity = ball.velocity.add(ball.acceleration);
-  ball.velocity = ball.velocity.multiply(1 - ball.friction);
-  ball.position = ball.position.add(ball.velocity);
-
-  // mouse control
-  if (mouseControls.value) {
-    const mouse = new Vector(x.value, y.value);
-
-    ball.acceleration = mouse.subtract(ball.position).normalize().divide(2);
-    ball.velocity = ball.velocity.add(ball.acceleration);
-  }
-}
-
+// main loop
 useRafFn(() => {
   ctx.value?.clearRect(0, 0, width.value, height.value);
 
   for (const ball of balls) {
-    if (ball.isPlayer) applyInputs(ball);
+    if (ball.isPlayer) useInputs(ball, mouseControls);
+
     ball.draw(ctx.value!);
 
     if (showDebug.value) {
@@ -91,10 +87,17 @@ useRafFn(() => {
     }
 
     ball.reposition();
+  }
 
-    // gravity
-    // ball.velocity.add(new Vector(0, 0.1));
-    // ball.position.add(ball.velocity);
+  for (const wall of walls) {
+    wall.draw(ctx.value!);
+
+    for (const ball of balls) {
+      if (isColliding(ball, wall)) {
+        resolvePenetration(ball, wall);
+        resolveCollision(ball, wall);
+      }
+    }
   }
 });
 </script>
